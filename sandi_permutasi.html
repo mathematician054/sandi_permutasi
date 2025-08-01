@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Simulasi Sandi Permutasi</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    input, button, textarea { margin: 8px 0; width: 100%; }
+    table { border-collapse: collapse; margin-top: 10px; }
+    td, th { border: 1px solid #000; padding: 4px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h2>Simulasi Sandi Permutasi Kolom</h2>
+
+  <label>Pesan:</label>
+  <textarea id="plaintext" rows="2"></textarea>
+
+  <label>Kunci Permutasi (misal: 3 1 4 2):</label>
+  <input type="text" id="key" placeholder="Masukkan kunci permutasi">
+
+  <button onclick="encrypt()">Enkripsi</button>
+  <button onclick="decrypt()">Dekripsi</button>
+
+  <h3>Hasil:</h3>
+  <p><strong>Pesan Terenkripsi:</strong> <span id="ciphertext"></span></p>
+  <p><strong>Pesan Terdekripsi:</strong> <span id="decrypted"></span></p>
+
+  <h3>Visualisasi Tabel:</h3>
+  <div id="tableDisplay"></div>
+
+  <script>
+    function parseKey(keyStr) {
+      return keyStr.trim().split(/\s+/).map(x => parseInt(x) - 1);
+    }
+
+    function chunkText(text, size) {
+      const chunks = [];
+      for (let i = 0; i < text.length; i += size) {
+        chunks.push(text.slice(i, i + size));
+      }
+      return chunks;
+    }
+
+    function encrypt() {
+      const text = document.getElementById('plaintext').value.replace(/[^A-Za-z]/g, '').toUpperCase();
+      const key = parseKey(document.getElementById('key').value);
+      const cols = key.length;
+
+      const padded = text.padEnd(Math.ceil(text.length / cols) * cols, 'X');
+      const rows = chunkText(padded, cols);
+      
+      const result = key.map(i => rows.map(row => row[i]).join('')).join('');
+      document.getElementById('ciphertext').textContent = result;
+      document.getElementById('decrypted').textContent = '';
+      drawTable(rows, key, true);
+    }
+
+    function decrypt() {
+      const cipher = document.getElementById('plaintext').value.replace(/[^A-Za-z]/g, '').toUpperCase();
+      const key = parseKey(document.getElementById('key').value);
+      const cols = key.length;
+      const rowsCount = cipher.length / cols;
+      const colsArray = Array(cols).fill('');
+      
+      let idx = 0;
+      for (let k = 0; k < key.length; k++) {
+        const colIndex = key.indexOf(k);
+        colsArray[colIndex] = cipher.slice(idx, idx + rowsCount);
+        idx += rowsCount;
+      }
+
+      const rows = [];
+      for (let i = 0; i < rowsCount; i++) {
+        let row = '';
+        for (let j = 0; j < cols; j++) {
+          row += colsArray[j][i];
+        }
+        rows.push(row);
+      }
+
+      const result = rows.join('').replace(/X+$/, '');
+      document.getElementById('decrypted').textContent = result;
+      document.getElementById('ciphertext').textContent = '';
+      drawTable(rows, key, false);
+    }
+
+    function drawTable(rows, key, isEncrypt) {
+      let html = '<table><tr>';
+      for (let i = 0; i < key.length; i++) {
+        html += `<th>${isEncrypt ? key[i] + 1 : i + 1}</th>`;
+      }
+      html += '</tr>';
+      for (const row of rows) {
+        html += '<tr>';
+        for (const ch of row) {
+          html += `<td>${ch}</td>`;
+        }
+        html += '</tr>';
+      }
+      html += '</table>';
+      document.getElementById('tableDisplay').innerHTML = html;
+    }
+  </script>
+</body>
+</html>
